@@ -47,6 +47,28 @@ def resolve_api_key(value):
     return key
 
 
+def map_timelimit(value: str, target: str) -> str:
+    """
+    将统一的时间过滤值映射到目标搜索引擎的格式。
+    
+    Args:
+        value: 统一值 (day/week/month/year/null/none/None)
+        target: 目标引擎 (ddgs/zai)
+    
+    Returns:
+        映射后的值
+    """
+    if value is None or str(value).lower() in ('null', 'none', ''):
+        return None if target == 'ddgs' else 'noLimit'
+    
+    mapping = {
+        'ddgs': {'day': 'd', 'week': 'w', 'month': 'm', 'year': 'y'},
+        'zai': {'day': 'oneDay', 'week': 'oneWeek', 'month': 'oneMonth', 'year': 'oneYear'}
+    }
+    
+    return mapping.get(target, {}).get(str(value).lower(), value)
+
+
 def get_langextract_config(conf: dict = None) -> dict:
     """
     获取 langextract 配置。
@@ -90,30 +112,68 @@ def get_langextract_config(conf: dict = None) -> dict:
 
 
 def get_zhipu_search_config(conf: dict = None) -> dict:
-    """获取智谱搜索配置。"""
+    """
+    获取智谱搜索配置。
+    
+    配置项:
+        enabled: 是否启用智谱搜索，默认 True
+        apiKey: API Key（支持环境变量引用）
+        search_engine: 搜索引擎 search_std/search_pro/search_pro_sogou/search_pro_quark，默认 search_pro
+        count: 返回结果数 1-50，默认 15
+        timelimit: 时间过滤 day/week/month/year/null，默认 null（不限）
+        content_size: 内容长度 medium/high，默认 high
+        search_domain_filter: 限定搜索域名，默认 null
+    """
     if conf is None:
         conf = load_project_conf()
     
     search_conf = conf.get('zhipu_search', {})
     
     api_key = resolve_api_key(search_conf.get('apiKey'))
+    timelimit = search_conf.get('timelimit')
     
     return {
         'enabled': search_conf.get('enabled', True),
-        'apiKey': api_key
+        'apiKey': api_key,
+        'search_engine': search_conf.get('search_engine', 'search_pro'),
+        'count': search_conf.get('count', 15),
+        'timelimit': timelimit,
+        'timelimit_mapped': map_timelimit(timelimit, 'zai'),
+        'content_size': search_conf.get('content_size', 'high'),
+        'search_domain_filter': search_conf.get('search_domain_filter')
     }
 
 
 def get_duckduckgo_search_config(conf: dict = None) -> dict:
-    """获取 DuckDuckGo 搜索配置。"""
+    """
+    获取 DuckDuckGo 搜索配置。
+    
+    配置项:
+        enabled: 是否启用 DuckDuckGo 搜索，默认 True
+        maxResults: 返回结果数，默认 20
+        region: 地区代码 cn-zh/us-en/wt-wt 等，默认 wt-wt（无限制）
+        safesearch: 安全搜索 on/moderate/off，默认 moderate
+        timelimit: 时间过滤 day/week/month/year/null，默认 null（不限）
+        backend: 搜索后端 auto/bing/google/duckduckgo/brave/yandex/yahoo，默认 auto
+        proxy: 代理地址，默认 null
+        timeout: 请求超时（秒），默认 10
+    """
     if conf is None:
         conf = load_project_conf()
     
     search_conf = conf.get('duckduckgo_search', {})
+    timelimit = search_conf.get('timelimit')
     
     return {
         'enabled': search_conf.get('enabled', True),
-        'maxResults': search_conf.get('maxResults', 20)
+        'maxResults': search_conf.get('maxResults', 20),
+        'region': search_conf.get('region', 'wt-wt'),
+        'safesearch': search_conf.get('safesearch', 'moderate'),
+        'timelimit': timelimit,
+        'timelimit_mapped': map_timelimit(timelimit, 'ddgs'),
+        'backend': search_conf.get('backend', 'auto'),
+        'proxy': search_conf.get('proxy'),
+        'timeout': search_conf.get('timeout', 10)
     }
 
 
@@ -187,13 +247,28 @@ def parse_mcp_output(output: str):
 def search_with_zhipu_mcp(query: str, verbose: bool = False):
     """
     Step 1a: Search using Zhipu AI's official zai-sdk (web_search API).
+    
+    配置参数从 conf.json 的 zhipu_search 节点读取:
+        search_engine: 搜索引擎
+        count: 返回结果数
+        timelimit: 时间过滤
+        content_size: 内容长度
+        search_domain_filter: 域名过滤
     """
+    search_conf = get_zhipu_search_config()
+    
     if verbose:
         print("\n" + "=" * 60)
         print("🔍 步骤 1a: 智谱 AI 网络搜索")
         print("=" * 60)
         print(f"\n📥 输入:")
         print(f"   搜索查询: {query}")
+        print(f"   搜索引擎: {search_conf['search_engine']}")
+        print(f"   结果数量: {search_conf['count']}")
+        print(f"   时间过滤: {search_conf['timelimit']} -> {search_conf['timelimit_mapped']}")
+        print(f"   内容长度: {search_conf['content_size']}")
+        if search_conf['search_domain_filter']:
+            print(f"   域名过滤: {search_conf['search_domain_filter']}")
     
     try:
         try:
@@ -202,7 +277,6 @@ def search_with_zhipu_mcp(query: str, verbose: bool = False):
         except ImportError:
             has_zai = False
         
-        search_conf = get_zhipu_search_config()
         api_key = search_conf.get('apiKey')
         
         if not api_key:
@@ -215,16 +289,19 @@ def search_with_zhipu_mcp(query: str, verbose: bool = False):
         search_results = []
         
         if has_zai:
-            # Use official zai-sdk
             client = ZhipuAiClient(api_key=api_key)
             
-            response = client.web_search.web_search(
-                search_engine="search_pro",
-                search_query=query,
-                count=15,
-                search_recency_filter="noLimit",
-                content_size="high"
-            )
+            search_params = {
+                'search_engine': search_conf['search_engine'],
+                'search_query': query,
+                'count': search_conf['count'],
+                'search_recency_filter': search_conf['timelimit_mapped'],
+                'content_size': search_conf['content_size']
+            }
+            if search_conf['search_domain_filter']:
+                search_params['search_domain_filter'] = search_conf['search_domain_filter']
+            
+            response = client.web_search.web_search(**search_params)
             
             # Parse search results from the response
             if hasattr(response, 'search_result') and response.search_result:
@@ -432,16 +509,41 @@ def search_with_volcengine(query: str, verbose: bool = False):
         }
 
 
-def search_with_duckduckgo(query: str, verbose: bool = False, max_results: int = 20):
+def search_with_duckduckgo(query: str, verbose: bool = False, max_results: int = None):
     """
     Step 1b: Search using DuckDuckGo (ddgs).
+    
+    配置参数从 conf.json 的 duckduckgo_search 节点读取:
+        maxResults: 返回结果数
+        region: 地区代码
+        safesearch: 安全搜索
+        timelimit: 时间过滤
+        backend: 搜索后端
+        proxy: 代理地址
+        timeout: 请求超时
+    
+    Args:
+        query: 搜索查询
+        verbose: 显示详细信息
+        max_results: 覆盖配置的结果数（可选）
     """
+    search_conf = get_duckduckgo_search_config()
+    actual_max_results = max_results if max_results is not None else search_conf['maxResults']
+    
     if verbose:
         print("\n" + "=" * 60)
         print("🔍 步骤 1b: DuckDuckGo 搜索")
         print("=" * 60)
         print(f"\n📥 输入:")
         print(f"   搜索查询: {query}")
+        print(f"   结果数量: {actual_max_results}")
+        print(f"   地区代码: {search_conf['region']}")
+        print(f"   安全搜索: {search_conf['safesearch']}")
+        print(f"   时间过滤: {search_conf['timelimit']} -> {search_conf['timelimit_mapped']}")
+        print(f"   搜索后端: {search_conf['backend']}")
+        if search_conf['proxy']:
+            print(f"   代理地址: {search_conf['proxy']}")
+        print(f"   超时设置: {search_conf['timeout']}s")
     
     try:
         from ddgs import DDGS
@@ -449,8 +551,22 @@ def search_with_duckduckgo(query: str, verbose: bool = False, max_results: int =
         if verbose:
             print(f"\n🤖 正在调用 DuckDuckGo...")
         
-        with DDGS() as ddgs:
-            search_results = list(ddgs.text(query, max_results=max_results))
+        ddgs_kwargs = {'timeout': search_conf['timeout']}
+        if search_conf['proxy']:
+            ddgs_kwargs['proxy'] = search_conf['proxy']
+        
+        with DDGS(**ddgs_kwargs) as ddgs:
+            search_params = {
+                'query': query,
+                'max_results': actual_max_results,
+                'region': search_conf['region'],
+                'safesearch': search_conf['safesearch'],
+                'backend': search_conf['backend']
+            }
+            if search_conf['timelimit_mapped']:
+                search_params['timelimit'] = search_conf['timelimit_mapped']
+            
+            search_results = list(ddgs.text(**search_params))
         
         if verbose:
             print(f"\n📤 输出:")
@@ -777,8 +893,8 @@ def main():
     parser.add_argument(
         "--ddg-max-results",
         type=int,
-        default=20,
-        help="DuckDuckGo 最大搜索结果数"
+        default=None,
+        help="DuckDuckGo 最大搜索结果数（覆盖配置文件，默认使用 conf.json 中的 maxResults）"
     )
     parser.add_argument(
         "--volcengine",
