@@ -6,8 +6,8 @@
 2. 提取：将搜索内容拼接后，调用 `langextract` 配置的模型做结构化提取
 3. 落盘：把搜索结果、提取结果与摘要写入 `output/`
 
-入口脚本： [search.py](file:///Users/luwei.will/ai/langextract-search/langextract-search/scripts/search.py)  
-核心配置： [conf.json](file:///Users/luwei.will/ai/langextract-search/langextract-search/conf.json)（可参考 [conf.json.example](file:///Users/luwei.will/ai/langextract-search/langextract-search/conf.json.example)）
+入口脚本： [search.py](langextract-search/scripts/search.py)  
+核心配置： `conf.json`（可参考 [conf.json.example](langextract-search/conf.json.example)）
 
 ## 快速开始
 
@@ -78,7 +78,7 @@ python search.py "Claude Code" --verbose
 
 除 `search.py` 的 `provider` 配置外，本仓库还包含 langextract 的多模型封装（供扩展使用）：
 
-- [langextract_wrap.py](file:///Users/luwei.will/ai/langextract-search/langextract-search/scripts/langextract_wrap.py)
+- [langextract_wrap.py](langextract-search/scripts/langextract_wrap.py)
   - 智谱类：`^glm` / `^zhipu`
   - 火山/豆包/Kimi：`^doubao` / `^volcengine` / `^kimi`
 

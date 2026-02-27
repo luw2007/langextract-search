@@ -7,6 +7,37 @@
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-02-27
+
+### Changed
+
+- 重构配置管理：移除硬编码配置，强制从 conf.json 读取
+- 简化路径获取函数，改为模块级常量
+- 修复 README.md 中的本地绝对路径为相对路径
+
+## [0.1.2] - 2026-02-27
+
+### Added
+
+- 火山引擎联网问答搜索支持（volcengine_search）
+- `--volcengine` 和 `--volcengine-only` 命令行参数
+
+### Changed
+
+- 优化搜索结果合并逻辑
+
+## [0.1.1] - 2026-02-27
+
+### Added
+
+- 智谱 AI 搜索集成（zai-sdk web_search API）
+- 多搜索源支持：智谱 + DuckDuckGo 组合搜索
+- 内容长度截断配置（extraction.max_content_length）
+
+### Changed
+
+- 改进 API Key 解析逻辑，支持环境变量引用
+
 ## [0.1.0] - 2026-02-27
 
 ### Added
@@ -26,6 +57,8 @@
 
 ---
 
-<!-- 版本链接 -->
-[Unreleased]: https://github.com/user/langextract-search/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/user/langextract-search/releases/tag/v0.1.0
+[Unreleased]: https://github.com/luw2007/langextract-search/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/luw2007/langextract-search/compare/v0.1.2...v0.1.3
+[0.1.2]: https://github.com/luw2007/langextract-search/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/luw2007/langextract-search/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/luw2007/langextract-search/releases/tag/v0.1.0

@@ -14,21 +14,14 @@ from datetime import datetime
 from pathlib import Path
 
 
-def get_project_root():
-    """Get project root directory - relative to this script."""
-    return Path(__file__).parent.parent
-
-
-def get_scripts_dir():
-    """Get scripts directory - where this script and langextract are located."""
-    return Path(__file__).parent
+PROJECT_ROOT = Path(__file__).parent.parent
+SCRIPTS_DIR = Path(__file__).parent
 
 
 def add_project_path():
-    """Add scripts directory to Python path so we can import bundled langextract."""
-    scripts_dir = get_scripts_dir()
-    if str(scripts_dir) not in sys.path:
-        sys.path.append(str(scripts_dir))
+    """将 scripts 目录添加到 Python 路径，以便导入 langextract。"""
+    if str(SCRIPTS_DIR) not in sys.path:
+        sys.path.append(str(SCRIPTS_DIR))
 
 
 
@@ -155,7 +148,7 @@ def get_extraction_config(conf: dict = None) -> dict:
 
 def get_project_conf_path():
     """获取项目配置文件路径"""
-    return get_project_root() / "conf.json"
+    return PROJECT_ROOT / "conf.json"
 
 
 def load_project_conf():
@@ -773,7 +766,7 @@ def main():
     )
     parser.add_argument(
         "--output-dir",
-        default=str(get_project_root() / "output"),
+        default=str(PROJECT_ROOT / "output"),
         help="输出目录"
     )
     parser.add_argument(
