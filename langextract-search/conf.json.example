@@ -1,0 +1,44 @@
+{
+  "_comment_langextract": "langextract 结构化提取配置，支持所有 OpenAI 兼容 API",
+  "_comment_providers": {
+    "volcengine_coding": {
+      "model": "doubao-seed-2-0-code",
+      "baseUrl": "https://ark.cn-beijing.volces.com/api/coding/v3",
+      "apiKey": "VOLCENGINE_API_KEY 或实际密钥"
+    },
+    "volcengine": {
+      "model": "doubao-pro-32k",
+      "baseUrl": "https://ark.cn-beijing.volces.com/api/v3",
+      "apiKey": "VOLCENGINE_API_KEY"
+    },
+    "zhipu": {
+      "model": "glm-4-flash",
+      "baseUrl": "https://open.bigmodel.cn/api/paas/v4",
+      "apiKey": "ZHIPUAI_API_KEY"
+    },
+    "openai": {
+      "model": "gpt-4o-mini",
+      "baseUrl": "https://api.openai.com/v1",
+      "apiKey": "OPENAI_API_KEY"
+    }
+  },
+  "langextract": {
+    "provider": "volcengine_coding",
+    "model": "doubao-seed-2-0-code",
+    "baseUrl": "https://ark.cn-beijing.volces.com/api/coding/v3",
+    "apiKey": "VOLCENGINE_API_KEY"
+  },
+  "zhipu_search": {
+    "enabled": true,
+    "apiKey": "ZHIPU_SEARCH_API_KEY"
+  },
+  "duckduckgo_search": {
+    "enabled": true,
+    "maxResults": 20
+  },
+  "volcengine_search": {
+    "enabled": false,
+    "apiKey": "VOLCENGINE_SEARCH_API_KEY",
+    "botId": "VOLCENGINE_BOT_ID"
+  }
+}
